@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import requests
 from os import listdir
 from os.path import isfile, join, exists, isdir, abspath
 
@@ -13,7 +14,7 @@ import tensorflow_hub as hub
 
 IMAGE_DIM = 224   # required/default image dimensionality
 
-def load_images(image_paths, image_size, verbose=True):
+def load_images(image_urls, image_size, verbose=True):
     '''
     Function for loading images into numpy arrays for passing to model.predict
     inputs:
@@ -29,23 +30,27 @@ def load_images(image_paths, image_size, verbose=True):
     loaded_images = []
     loaded_image_paths = []
 
-    if isdir(image_paths):
-        parent = abspath(image_paths)
-        image_paths = [join(parent, f) for f in listdir(image_paths) if isfile(join(parent, f))]
-    elif isfile(image_paths):
-        image_paths = [image_paths]
+    if type(image_urls) is list:
+        pass
+        # parent = abspath(image_paths)
+        # image_paths = [join(parent, f) for f in listdir(image_paths) if isfile(join(parent, f))]
+    else:
+        image_datas = [image_urls]
 
-    for img_path in image_paths:
+    responses = [requests.get(url) for url in image_urls]
+    image_datas = [response.content for response in responses if response.status_code == 200]
+        
+    for img_data in image_datas:
         try:
             if verbose:
-                print(img_path, "size:", image_size)
-            image = keras.preprocessing.image.load_img(img_path, target_size=image_size)
+                print(img_data, "size:", image_size)
+            image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
             image = keras.preprocessing.image.img_to_array(image)
             image /= 255
             loaded_images.append(image)
-            loaded_image_paths.append(img_path)
+            loaded_image_paths.append(img_data)
         except Exception as ex:
-            print("Image Load Failure: ", img_path, ex)
+            print("Image Load Failure: ", img_data, ex)
     
     return np.asarray(loaded_images), loaded_image_paths
 
