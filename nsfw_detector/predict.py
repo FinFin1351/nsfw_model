@@ -72,8 +72,8 @@ def load_images(image_urls, image_size, verbose=True):
             if verbose:
                 print(img_data, "size:", image_size)
             if type(img_data) != str:
-                image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
-                image = keras.preprocessing.image.img_to_array(image)
+                # image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
+                image = keras.preprocessing.image.img_to_array(img_data)
             else:
                 image = load_img_from_url(img_data)
             if image is not None:
