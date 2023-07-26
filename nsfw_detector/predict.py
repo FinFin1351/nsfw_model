@@ -5,6 +5,8 @@ import json
 import requests
 from os import listdir
 from os.path import isfile, join, exists, isdir, abspath
+from PIL import Image
+from io import BytesIO
 
 import numpy as np
 import tensorflow as tf
@@ -13,6 +15,31 @@ import tensorflow_hub as hub
 
 
 IMAGE_DIM = 224   # required/default image dimensionality
+
+def load_img_from_url(url, target_size=None):
+    try:
+        # Download the image from the URL
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for 4xx and 5xx errors
+
+        # Open the downloaded image using PIL
+        img = Image.open(BytesIO(response.content))
+
+        # Resize the image if target_size is provided
+        if target_size is not None:
+            img = img.resize(target_size)
+
+        # Convert the PIL image to a NumPy array
+        img_array = keras.processing.image.img_to_array(img)
+
+        return img_array
+
+    except Exception as e:
+        # Handle other unexpected errors
+        print(f"An error occurred while loading the image from URL: {url}")
+        print(e)
+
+    return None  # Return None if there's an error
 
 def load_images(image_urls, image_size, verbose=True):
     '''
@@ -40,17 +67,19 @@ def load_images(image_urls, image_size, verbose=True):
     responses = [requests.get(url) for url in image_urls]
     image_datas = [response.content for response in responses if response.status_code == 200]
         
-    for img_data in image_datas:
+    for img_url in image_datas:
         try:
             if verbose:
-                print(img_data, "size:", image_size)
-            image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
-            image = keras.preprocessing.image.img_to_array(image)
-            image /= 255
-            loaded_images.append(image)
-            loaded_image_paths.append(img_data)
+                print(img_url, "size:", image_size)
+            # image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
+            # image = keras.preprocessing.image.img_to_array(image)
+            image = load_img_from_url(img_url)
+            if image is not None:
+                image /= 255
+                loaded_images.append(image)
+                loaded_image_paths.append(img_url)
         except Exception as ex:
-            print("Image Load Failure: ", img_data, ex)
+            print("Image Load Failure: ", img_url, ex)
     
     return np.asarray(loaded_images), loaded_image_paths
 
