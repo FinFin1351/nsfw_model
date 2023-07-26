@@ -67,19 +67,21 @@ def load_images(image_urls, image_size, verbose=True):
     responses = [requests.get(url) for url in image_urls]
     image_datas = [response.content for response in responses if response.status_code == 200]
         
-    for img_url in image_datas:
+    for img_data in image_datas:
         try:
             if verbose:
-                print(img_url, "size:", image_size)
-            # image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
-            # image = keras.preprocessing.image.img_to_array(image)
-            image = load_img_from_url(img_url)
+                print(img_data, "size:", image_size)
+            if type(img_data) != str:
+                image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
+                image = keras.preprocessing.image.img_to_array(image)
+            else:
+                image = load_img_from_url(img_data)
             if image is not None:
                 image /= 255
                 loaded_images.append(image)
-                loaded_image_paths.append(img_url)
+                loaded_image_paths.append(img_data)
         except Exception as ex:
-            print("Image Load Failure: ", img_url, ex)
+            print("Image Load Failure: ", img_data, ex)
     
     return np.asarray(loaded_images), loaded_image_paths
 
