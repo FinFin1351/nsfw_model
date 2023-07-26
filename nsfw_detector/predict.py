@@ -30,7 +30,7 @@ def load_img_from_url(url, target_size=None):
             img = img.resize(target_size)
 
         # Convert the PIL image to a NumPy array
-        img_array = keras.processing.image.img_to_array(img)
+        img_array = keras.preprocessing.image.img_to_array(img)
 
         return img_array
 
@@ -41,7 +41,7 @@ def load_img_from_url(url, target_size=None):
 
     return None  # Return None if there's an error
 
-def load_images(image_urls, image_size, verbose=True):
+def load_images(image_urls, image_size, verbose=False):
     '''
     Function for loading images into numpy arrays for passing to model.predict
     inputs:
@@ -64,18 +64,19 @@ def load_images(image_urls, image_size, verbose=True):
     else:
         image_datas = [image_urls]
 
-    responses = [requests.get(url) for url in image_urls]
-    image_datas = [response.content for response in responses if response.status_code == 200]
+    # if type(image_urls[0]) == str:
+    #     responses = [requests.get(url) for url in image_urls]
+    #     image_datas = [response.content for response in responses if response.status_code == 200]
         
-    for img_data in image_datas:
+    for img_data in image_urls:
         try:
             if verbose:
                 print(img_data, "size:", image_size)
             if type(img_data) != str:
-                # image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
+                image = keras.preprocessing.image.load_img(img_data, target_size=image_size)
                 image = keras.preprocessing.image.img_to_array(img_data)
             else:
-                image = load_img_from_url(img_data)
+                image = load_img_from_url(img_data, image_size)
             if image is not None:
                 image /= 255
                 loaded_images.append(image)
